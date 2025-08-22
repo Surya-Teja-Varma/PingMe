@@ -12,7 +12,7 @@ export default function CreatePost() {
     e.preventDefault();
     if (content.trim()) {
       try {
-        const response = await fetch('http://localhost:5000/api/posts', {
+        const response = await fetch('/api/posts', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -21,10 +21,8 @@ export default function CreatePost() {
         });
 
         if (response.ok) {
-          // Refetch all posts to update the UI
-          const postsRes = await fetch('http://localhost:5000/api/posts');
+          const postsRes = await fetch('/api/posts');
           const posts = await postsRes.json();
-          // The AppContext reducer will handle updating the state
           dispatch({ type: 'FETCH_DATA', payload: { ...state, posts } });
           
           setContent('');

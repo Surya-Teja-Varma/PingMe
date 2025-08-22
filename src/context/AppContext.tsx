@@ -84,9 +84,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const fetchData = async () => {
       try {
         const [usersRes, postsRes, notificationsRes] = await Promise.all([
-          fetch('http://localhost:5000/api/users'),
-          fetch('http://localhost:5000/api/posts'),
-          fetch(`http://localhost:5000/api/notifications/${state.currentUserId}`),
+          fetch('/api/users'),
+          fetch('/api/posts'),
+          fetch(`/api/notifications/${state.currentUserId}`),
         ]);
 
         const users: User[] = await usersRes.json();

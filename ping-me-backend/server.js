@@ -1,13 +1,17 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
+import express from 'express';
+import mongoose from 'mongoose';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// A helper function to get __dirname in ES module scope
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(express.json());
-app.use(cors());
 
 // MongoDB connection
 const mongoURI = 'mongodb+srv://Varma:Varma1234@cluster0.7mtauj2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
@@ -34,14 +38,14 @@ const userSchema = new mongoose.Schema({
 const postSchema = new mongoose.Schema({
   userId: String,
   content: String,
-  likes: { type: [String], default: [] }, // Corrected: `likes` should be an array of strings
+  likes: { type: [String], default: [] },
   createdAt: { type: Date, default: Date.now },
 });
 
 const notificationSchema = new mongoose.Schema({
   userId: String,
   fromUserId: String,
-  type: String, // e.g., 'like', 'follow', 'post'
+  type: String,
   message: String,
   read: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
@@ -52,8 +56,6 @@ const Post = mongoose.model('Post', postSchema);
 const Notification = mongoose.model('Notification', notificationSchema);
 
 // API Routes
-
-// Get all posts
 app.get('/api/posts', async (req, res) => {
   try {
     const posts = await Post.find({});
@@ -63,7 +65,6 @@ app.get('/api/posts', async (req, res) => {
   }
 });
 
-// Like a post and create a notification
 app.post('/api/posts/:id/like', async (req, res) => {
   const { userId } = req.body;
   try {
@@ -85,7 +86,7 @@ app.post('/api/posts/:id/like', async (req, res) => {
         userId: post.userId,
         fromUserId: userId,
         type: 'like',
-        message: `Your post was liked.`,
+        message: 'Your post was liked.',
       });
       await notification.save();
     }
@@ -97,7 +98,6 @@ app.post('/api/posts/:id/like', async (req, res) => {
   }
 });
 
-// Add a new post
 app.post('/api/posts', async (req, res) => {
   const { userId, content } = req.body;
   try {
@@ -116,7 +116,6 @@ app.post('/api/posts', async (req, res) => {
   }
 });
 
-// Get all users
 app.get('/api/users', async (req, res) => {
   try {
     const users = await User.find({});
@@ -126,7 +125,6 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
-// Get a single user by ID
 app.get('/api/users/:id', async (req, res) => {
   try {
     const user = await User.findOne({ id: req.params.id });
@@ -139,7 +137,6 @@ app.get('/api/users/:id', async (req, res) => {
   }
 });
 
-// Toggle a follow/unfollow action
 app.post('/api/users/toggle-follow', async (req, res) => {
   const { followerId, followingId } = req.body;
   try {
@@ -177,7 +174,6 @@ app.post('/api/users/toggle-follow', async (req, res) => {
   }
 });
 
-// Get all notifications for a user
 app.get('/api/notifications/:userId', async (req, res) => {
   try {
     const notifications = await Notification.find({ userId: req.params.userId }).sort({ createdAt: -1 });
@@ -187,7 +183,6 @@ app.get('/api/notifications/:userId', async (req, res) => {
   }
 });
 
-// Mark a single notification as read
 app.put('/api/notifications/:id/read', async (req, res) => {
   try {
     const notification = await Notification.findByIdAndUpdate(
@@ -204,7 +199,6 @@ app.put('/api/notifications/:id/read', async (req, res) => {
   }
 });
 
-// Mark all notifications for a user as read
 app.put('/api/notifications/mark-all-read/:userId', async (req, res) => {
   try {
     await Notification.updateMany(
@@ -215,6 +209,14 @@ app.put('/api/notifications/mark-all-read/:userId', async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: 'Error marking all notifications as read' });
   }
+});
+
+// Serve the static frontend files.
+app.use(express.static(path.join(__dirname, '..', 'dist')));
+
+// A catch-all route for the single-page application.
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
 });
 
 app.listen(PORT, () => {
